@@ -42,6 +42,7 @@ class AfipWSAA
 
         $cmsFile = tempnam(sys_get_temp_dir(), 'cms');
 
+        // Firmar TRA → OpenSSL genera S/MIME, después extraemos solo el PKCS7
         $ok = openssl_pkcs7_sign(
             $traFile,
             $cmsFile,
@@ -57,23 +58,29 @@ class AfipWSAA
         }
 
         $cmsData = file_get_contents($cmsFile);
-        $cmsData = preg_replace("~.*?-----BEGIN PKCS7-----~s", "-----BEGIN PKCS7-----", $cmsData);
-        $cmsData = preg_replace("~-----END PKCS7-----.*~s", "-----END PKCS7-----", $cmsData);
-        $cmsData = trim($cmsData);
-        $this->logger->log('wsaa.log', "CMS generado:\n" . $cmsData);
+        $this->logger->log('wsaa.log', "CMS bruto (S/MIME):\n" . $cmsData);
 
+        // EXTRAER SOLO EL PKCS7 BASE64 DEL S/MIME
+        if (preg_match('/Content-Transfer-Encoding:\s*base64\s+([A-Za-z0-9+\/=\r\n]+)/s', $cmsData, $m)) {
+            $cmsData = trim($m[1]);
+        } else {
+            $this->logger->log('wsaa.log', 'No se pudo extraer PKCS7 del S/MIME');
+            throw new Exception('No se pudo extraer PKCS7 del S/MIME');
+        }
+
+        $this->logger->log('wsaa.log', "CMS extraído (PKCS7 base64):\n" . $cmsData);
+
+        // 3) Llamar a WSAA
         $client = new SoapClient($wsdl, ['trace' => 1, 'exceptions' => true]);
         $resp   = $client->loginCms(['in0' => $cmsData]);
-        $this->logger->log('wsaa.log', "CMS enviado:\n" . $cmsData);
-        $this->logger->log('wsaa.log', "CMS enviado:\n" . $cmsData);
 
         $this->logger->log('wsaa.log', "SOAP Request:\n" . $client->__getLastRequest());
         $this->logger->log('wsaa.log', "SOAP Response:\n" . $client->__getLastResponse());
         $this->logger->log('wsaa.log', "loginCmsReturn:\n" . $resp->loginCmsReturn);
-        
+
         $ta = new SimpleXMLElement($resp->loginCmsReturn);
 
-        // 3) Guardar TA en cache
+        // 4) Guardar TA en cache
         file_put_contents($this->conf['ta_file'], $ta->asXML());
         $this->logger->log('wsaa.log', 'TA obtenido y cacheado');
 
