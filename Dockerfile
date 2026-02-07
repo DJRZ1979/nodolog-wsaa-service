@@ -1,5 +1,5 @@
 FROM php:8.2-apache
-
+RUN apt-get update && apt-get install -y openssl ca-certificates libcurl4-openssl-dev
 # Instalar extensiones necesarias
 RUN apt-get update && apt-get install -y \
     libxml2-dev \
