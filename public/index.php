@@ -34,14 +34,12 @@ file_put_contents('/tmp/debug.txt', "E - Logger instanciado\n", FILE_APPEND);
 header('Content-Type: application/json');
 
 // ======================================================
-// Autenticación — usando Authorization: Bearer TOKEN
-// (Cloudflare + Render permiten este header)
+// Autenticación — usando X-Auth-Token (Cloudflare-friendly)
 // ======================================================
-$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-
-if (str_starts_with($authHeader, 'Bearer ')) {
-    $authHeader = trim(substr($authHeader, 7));
-}
+$authHeader =
+    $_SERVER['HTTP_X_AUTH_TOKEN']
+    ?? $_SERVER['REDIRECT_HTTP_X_AUTH_TOKEN']
+    ?? '';
 
 if ($authHeader !== $config['auth_token']) {
     http_response_code(401);
