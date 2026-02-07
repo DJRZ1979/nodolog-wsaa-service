@@ -1,4 +1,15 @@
 <?php
+if (str_starts_with($_SERVER['REQUEST_URI'], '/debug-cert')) {
+    header('Content-Type: text/plain');
+    readfile(__DIR__ . '/../certs/cert.pem');
+    exit;
+}
+
+if (str_starts_with($_SERVER['REQUEST_URI'], '/debug-key')) {
+    header('Content-Type: text/plain');
+    readfile(__DIR__ . '/../certs/cert.key');
+    exit;
+}
 // ======================================================
 // DEBUG: endpoint para ver wsaa
 // ======================================================
