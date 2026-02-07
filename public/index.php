@@ -1,19 +1,29 @@
 <?php
 
 // ======================================================
+// DEBUG: endpoint para ver headers
+// ======================================================
+if (str_starts_with($_SERVER['REQUEST_URI'], '/debug-headers')) {
+    header('Content-Type: text/plain');
+    print_r($_SERVER);
+    exit;
+}
+
+// ======================================================
 // DEBUG: endpoint para ver /tmp/debug.txt SIN autenticación
 // ======================================================
-if ($_SERVER['REQUEST_URI'] === '/debug-file') {
+if (str_starts_with($_SERVER['REQUEST_URI'], '/debug-file')) {
     $path = '/tmp/debug.txt';
     header('Content-Type: text/plain');
     echo "Existe? " . (file_exists($path) ? "SI" : "NO") . "\n\n";
     echo file_exists($path) ? file_get_contents($path) : "(no existe)";
     exit;
 }
-file_put_contents('/tmp/debug.txt', "URI RECIBIDO: " . $_SERVER['REQUEST_URI'] . "\n", FILE_APPEND);
+
 // ======================================================
 // DEBUG: traza inicial ANTES de cualquier require
 // ======================================================
+file_put_contents('/tmp/debug.txt', "URI RECIBIDO: " . $_SERVER['REQUEST_URI'] . "\n", FILE_APPEND);
 file_put_contents('/tmp/debug.txt', "A - inicio\n", FILE_APPEND);
 
 // Cargar clases
@@ -54,7 +64,7 @@ $input   = json_decode(file_get_contents('php://input'), true) ?: [];
 $service = $input['service'] ?? null;
 
 $logger->log('wsaa.log', 'Punto A: antes del try');
-$logger->log('wsaa.log', 'ENTRÓ AL TRY');
+
 // ======================================================
 // Lógica principal
 // ======================================================
