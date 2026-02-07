@@ -1,10 +1,9 @@
 <?php
 require __DIR__ . '/../src/Logger.php';
 require __DIR__ . '/../src/AfipWSAA.php';
-if ($_SERVER['REQUEST_URI'] === '/debug-openssl') {
+if ($_SERVER['REQUEST_URI'] === '/debug-soap') {
     echo "<pre>";
-    echo "OpenSSL loaded? " . (extension_loaded('openssl') ? "SI" : "NO") . "\n";
-    echo "OpenSSL version: " . OPENSSL_VERSION_TEXT . "\n";
+    echo "Soap loaded? " . (extension_loaded('soap') ? "SI" : "NO") . "\n";
     echo "</pre>";
     exit;
 }
@@ -12,15 +11,7 @@ header('Content-Type: application/json');
 
 $config = require __DIR__ . '/../config/afip.php';
 $logger = new Logger($config['log_path']);
-if ($_SERVER['REQUEST_URI'] === '/debug-certs') {
-    echo "<pre>";
-    echo "Cert path: " . $config['cert'] . "\n";
-    echo "Key path: " . $config['key'] . "\n";
-    echo "Cert exists? " . (file_exists($config['cert']) ? "SI" : "NO") . "\n";
-    echo "Key exists? " . (file_exists($config['key']) ? "SI" : "NO") . "\n";
-    echo "</pre>";
-    exit;
-}
+
 // Autenticación por token
 $authHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($authHeader !== $config['auth_token']) {
