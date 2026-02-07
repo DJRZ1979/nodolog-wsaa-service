@@ -60,6 +60,7 @@ class AfipWSAA
         $cmsData = preg_replace("~.*?-----BEGIN PKCS7-----~s", "-----BEGIN PKCS7-----", $cmsData);
         $cmsData = preg_replace("~-----END PKCS7-----.*~s", "-----END PKCS7-----", $cmsData);
         $cmsData = trim($cmsData);
+        $this->logger->log('wsaa.log', "CMS generado:\n" . $cmsData);
 
         $client = new SoapClient($wsdl, ['trace' => 1, 'exceptions' => true]);
         $resp   = $client->loginCms(['in0' => $cmsData]);
