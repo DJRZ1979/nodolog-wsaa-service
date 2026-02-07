@@ -1,4 +1,17 @@
 <?php
+file_put_contents('/tmp/debug.txt', "A - inicio\n", FILE_APPEND);
+
+require __DIR__ . '/../src/Logger.php';
+file_put_contents('/tmp/debug.txt', "B - Logger cargado\n", FILE_APPEND);
+
+require __DIR__ . '/../src/AfipWSAA.php';
+file_put_contents('/tmp/debug.txt', "C - AfipWSAA cargado\n", FILE_APPEND);
+
+$config = require __DIR__ . '/../config/afip.php';
+file_put_contents('/tmp/debug.txt', "D - config cargado\n", FILE_APPEND);
+
+$logger = new Logger($config['log_path']);
+file_put_contents('/tmp/debug.txt', "E - logger instanciado\n", FILE_APPEND);
 require __DIR__ . '/../src/Logger.php';
 require __DIR__ . '/../src/AfipWSAA.php';
 
