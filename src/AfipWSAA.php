@@ -61,12 +61,16 @@ class AfipWSAA
         $this->logger->log('wsaa.log', "CMS bruto (S/MIME):\n" . $cmsData);
 
         // EXTRAER SOLO EL PKCS7 BASE64 DEL S/MIME
-        if (preg_match('/Content-Transfer-Encoding:\s*base64\s+([A-Za-z0-9+\/=\r\n]+)/s', $cmsData, $m)) {
-            $cmsData = trim($m[1]);
-        } else {
-            $this->logger->log('wsaa.log', 'No se pudo extraer PKCS7 del S/MIME');
-            throw new Exception('No se pudo extraer PKCS7 del S/MIME');
-        }
+        if (preg_match(
+    '/Content-Transfer-Encoding:\s*base64\s*\r?\n\r?\n([A-Za-z0-9+\/=\r\n]+)\r?\n-+/s',
+    $cmsData,
+    $m
+)) {
+    $cmsData = trim($m[1]);
+} else {
+    $this->logger->log('wsaa.log', 'No se pudo extraer PKCS7 del S/MIME');
+    throw new Exception('No se pudo extraer PKCS7 del S/MIME');
+}
 
         $this->logger->log('wsaa.log', "CMS extraído (PKCS7 base64):\n" . $cmsData);
 
