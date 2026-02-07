@@ -1,7 +1,10 @@
 FROM php:8.2-apache
-RUN apt-get update && apt-get install -y openssl ca-certificates libcurl4-openssl-dev
-# Instalar extensiones necesarias
+
+# Instalar OpenSSL completo + dependencias necesarias para PKCS7/SMIME
 RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    libcurl4-openssl-dev \
     libxml2-dev \
     libssl-dev \
     && docker-php-ext-install soap
