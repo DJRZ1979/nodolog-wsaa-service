@@ -60,8 +60,7 @@ class AfipWSAA
         $cmsData = file_get_contents($cmsFile);
         $this->logger->log('wsaa.log', "CMS bruto (S/MIME):\n" . $cmsData);
 
-        // EXTRAER SOLO EL PKCS7 BASE64 DEL S/MIME
-   
+// EXTRAER SOLO EL PKCS7 BASE64 DEL S/MIME
 if (preg_match(
     '/Content-Transfer-Encoding:\s*base64\s*(?:\r?\n)+([A-Za-z0-9+\/=\r\n]+?)(?=\r?\n-)/s',
     $cmsData,
