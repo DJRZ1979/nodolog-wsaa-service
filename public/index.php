@@ -1,12 +1,7 @@
 <?php
 require __DIR__ . '/../src/Logger.php';
 require __DIR__ . '/../src/AfipWSAA.php';
-if ($_SERVER['REQUEST_URI'] === '/debug-soap') {
-    echo "<pre>";
-    echo "Soap loaded? " . (extension_loaded('soap') ? "SI" : "NO") . "\n";
-    echo "</pre>";
-    exit;
-}
+
 header('Content-Type: application/json');
 
 $config = require __DIR__ . '/../config/afip.php';
