@@ -1,7 +1,13 @@
 <?php
 require __DIR__ . '/../src/Logger.php';
 require __DIR__ . '/../src/AfipWSAA.php';
-
+if ($_SERVER['REQUEST_URI'] === '/debug-openssl') {
+    echo "<pre>";
+    echo "OpenSSL loaded? " . (extension_loaded('openssl') ? "SI" : "NO") . "\n";
+    echo "OpenSSL version: " . OPENSSL_VERSION_TEXT . "\n";
+    echo "</pre>";
+    exit;
+}
 header('Content-Type: application/json');
 
 $config = require __DIR__ . '/../config/afip.php';
