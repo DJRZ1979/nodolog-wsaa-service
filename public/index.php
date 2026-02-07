@@ -6,7 +6,15 @@ header('Content-Type: application/json');
 
 $config = require __DIR__ . '/../config/afip.php';
 $logger = new Logger($config['log_path']);
-
+if ($_SERVER['REQUEST_URI'] === '/debug-certs') {
+    echo "<pre>";
+    echo "Cert path: " . $config['cert'] . "\n";
+    echo "Key path: " . $config['key'] . "\n";
+    echo "Cert exists? " . (file_exists($config['cert']) ? "SI" : "NO") . "\n";
+    echo "Key exists? " . (file_exists($config['key']) ? "SI" : "NO") . "\n";
+    echo "</pre>";
+    exit;
+}
 // Autenticación por token
 $authHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
 if ($authHeader !== $config['auth_token']) {
