@@ -63,7 +63,12 @@ class AfipWSAA
 
         $client = new SoapClient($wsdl, ['trace' => 1, 'exceptions' => true]);
         $resp   = $client->loginCms(['in0' => $cmsData]);
+        $this->logger->log('wsaa.log', "CMS enviado:\n" . $cmsData);
 
+$this->logger->log('wsaa.log', "SOAP Request:\n" . $client->__getLastRequest());
+$this->logger->log('wsaa.log', "SOAP Response:\n" . $client->__getLastResponse());
+
+$this->logger->log('wsaa.log', "loginCmsReturn:\n" . $resp->loginCmsReturn);
         $ta = new SimpleXMLElement($resp->loginCmsReturn);
 
         // 3) Guardar TA en cache
