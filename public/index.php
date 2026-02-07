@@ -1,9 +1,5 @@
 <?php
-if ($_SERVER['REQUEST_URI'] === '/debug-headers') {
-    header('Content-Type: text/plain');
-    print_r($_SERVER);
-    exit;
-}
+
 // ======================================================
 // DEBUG: endpoint para ver /tmp/debug.txt SIN autenticación
 // ======================================================
@@ -38,9 +34,15 @@ file_put_contents('/tmp/debug.txt', "E - Logger instanciado\n", FILE_APPEND);
 header('Content-Type: application/json');
 
 // ======================================================
-// Autenticación por token
+// Autenticación — usando Authorization: Bearer TOKEN
+// (Cloudflare + Render permiten este header)
 // ======================================================
-$authHeader = $_SERVER['HTTP_X_API_KEY'] ?? '';
+$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+
+if (str_starts_with($authHeader, 'Bearer ')) {
+    $authHeader = trim(substr($authHeader, 7));
+}
+
 if ($authHeader !== $config['auth_token']) {
     http_response_code(401);
     echo json_encode(['ok' => false, 'error' => 'Unauthorized']);
@@ -59,22 +61,6 @@ $logger->log('wsaa.log', 'Punto A: antes del try');
 // Lógica principal
 // ======================================================
 try {
-    $logger->log('wsaa.log', 'Punto B: instanciando AfipWSAA');
-    $wsaa = new AfipWSAA($config, $logger);
-
-    $logger->log('wsaa.log', 'Punto C: llamando a obtenerTA');
-    $ta   = $wsaa->obtenerTA($service);
-
-    echo json_encode([
-        'ok' => true,
-        'ta' => base64_encode($ta->asXML()),
-    ]);
-
-} catch (Throwable $e) {
-    $logger->log('wsaa.log', 'Error endpoint: ' . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
-}try {
     $logger->log('wsaa.log', 'Punto B: instanciando AfipWSAA');
     $wsaa = new AfipWSAA($config, $logger);
 
