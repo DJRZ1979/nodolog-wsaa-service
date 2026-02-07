@@ -1,5 +1,9 @@
 <?php
-
+if ($_SERVER['REQUEST_URI'] === '/debug-headers') {
+    header('Content-Type: text/plain');
+    print_r($_SERVER);
+    exit;
+}
 // ======================================================
 // DEBUG: endpoint para ver /tmp/debug.txt SIN autenticación
 // ======================================================
