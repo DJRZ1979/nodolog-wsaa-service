@@ -1,5 +1,14 @@
 <?php
-
+// ======================================================
+// DEBUG: endpoint para ver wsaa
+// ======================================================
+if (str_starts_with($_SERVER['REQUEST_URI'], '/debug-wsaa')) {
+    $path = '/tmp/wsaa.log';
+    header('Content-Type: text/plain');
+    echo "Existe? " . (file_exists($path) ? "SI" : "NO") . "\n\n";
+    echo file_exists($path) ? file_get_contents($path) : "(no existe)";
+    exit;
+}
 // ======================================================
 // DEBUG: endpoint para ver headers
 // ======================================================
