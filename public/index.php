@@ -54,7 +54,7 @@ $input   = json_decode(file_get_contents('php://input'), true) ?: [];
 $service = $input['service'] ?? null;
 
 $logger->log('wsaa.log', 'Punto A: antes del try');
-
+$logger->log('wsaa.log', 'ENTRÓ AL TRY');
 // ======================================================
 // Lógica principal
 // ======================================================
