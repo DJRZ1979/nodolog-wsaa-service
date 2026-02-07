@@ -1,11 +1,4 @@
 <?php
-if ($_SERVER['REQUEST_URI'] === '/debug-config') {
-    $config = require __DIR__ . '/../config/afip.php';
-    echo "<pre>";
-    var_dump($config['log_path']);
-    echo "</pre>";
-    exit;
-}
 require __DIR__ . '/../src/Logger.php';
 require __DIR__ . '/../src/AfipWSAA.php';
 
