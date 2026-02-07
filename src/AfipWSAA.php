@@ -42,7 +42,7 @@ class AfipWSAA
 
         $cmsFile = tempnam(sys_get_temp_dir(), 'cms');
 
-        // Firmar TRA → OpenSSL genera S/MIME, después extraemos solo el PKCS7
+        // Firmar TRA → OpenSSL genera S/MIME
         $ok = openssl_pkcs7_sign(
             $traFile,
             $cmsFile,
@@ -60,17 +60,55 @@ class AfipWSAA
         $cmsData = file_get_contents($cmsFile);
         $this->logger->log('wsaa.log', "CMS bruto (S/MIME):\n" . $cmsData);
 
-// EXTRAER SOLO EL PKCS7 BASE64 DEL S/MIME
-if (preg_match(
-    '/Content-Transfer-Encoding:\s*base64\s*(?:\r?\n)+([A-Za-z0-9+\/=\r\n]+?)(?=\r?\n-)/s',
-    $cmsData,
-    $m
-)) {
-    $cmsData = trim($m[1]);
-} else {
-    $this->logger->log('wsaa.log', 'No se pudo extraer PKCS7 del S/MIME');
-    throw new Exception('No se pudo extraer PKCS7 del S/MIME');
-}
+        // NORMALIZAR SALTOS DE LÍNEA
+        $cmsData = str_replace("\r\n", "\n", $cmsData);
+
+        // EXTRAER SOLO EL PKCS7 BASE64 DEL S/MIME (sin regex)
+        $marker = 'Content-Transfer-Encoding: base64';
+        $pos = strpos($cmsData, $marker);
+
+        if ($pos === false) {
+            $this->logger->log('wsaa.log', 'No se encontró el header Content-Transfer-Encoding: base64');
+            throw new Exception('No se pudo extraer PKCS7 del S/MIME');
+        }
+
+        // Fin de la línea del header
+        $pos = strpos($cmsData, "\n", $pos);
+        if ($pos === false) {
+            $this->logger->log('wsaa.log', 'No se encontró fin de línea tras Content-Transfer-Encoding');
+            throw new Exception('No se pudo extraer PKCS7 del S/MIME');
+        }
+
+        // Saltar Content-Disposition (si está)
+        $nextLine = strpos($cmsData, "\n", $pos + 1);
+        if ($nextLine === false) {
+            $this->logger->log('wsaa.log', 'No se encontró línea siguiente a Content-Transfer-Encoding');
+            throw new Exception('No se pudo extraer PKCS7 del S/MIME');
+        }
+
+        // Buscar línea en blanco que separa headers del base64
+        $blankLine = strpos($cmsData, "\n\n", $nextLine);
+        if ($blankLine === false) {
+            // Si no hay doble salto, usamos el siguiente salto
+            $blankLine = $nextLine;
+        }
+
+        $start = $blankLine + 2;
+
+        // Buscar boundary de cierre
+        $end = strpos($cmsData, "\n------", $start);
+        if ($end === false) {
+            $this->logger->log('wsaa.log', 'No se encontró boundary de cierre tras el bloque base64');
+            throw new Exception('No se pudo extraer PKCS7 del S/MIME');
+        }
+
+        $cmsBase64 = substr($cmsData, $start, $end - $start);
+        $cmsData   = trim($cmsBase64);
+
+        if ($cmsData === '') {
+            $this->logger->log('wsaa.log', 'El bloque PKCS7 base64 quedó vacío tras extraer');
+            throw new Exception('No se pudo extraer PKCS7 del S/MIME');
+        }
 
         $this->logger->log('wsaa.log', "CMS extraído (PKCS7 base64):\n" . $cmsData);
 
