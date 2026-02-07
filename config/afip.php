@@ -13,7 +13,7 @@ return [
     'service_default' => 'wsfe',
     'log_path'        => __DIR__ . '/../logs',
 
-    'auth_token'      => 'CAMBIA_ESTE_TOKEN_LARGO_UNICO',
+    'auth_token'      => 'b7f2e1c9a4d8f0e3b1c7d9a2f4e6b8c1',
     'ta_margin'       => 120,
     'ta_file'         => __DIR__ . '/../logs/ta.xml',
 ];
