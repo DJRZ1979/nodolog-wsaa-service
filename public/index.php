@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_URI'] === '/debug-file') {
     echo file_exists($path) ? file_get_contents($path) : "(no existe)";
     exit;
 }
-
+file_put_contents('/tmp/debug.txt', "URI RECIBIDO: " . $_SERVER['REQUEST_URI'] . "\n", FILE_APPEND);
 // ======================================================
 // DEBUG: traza inicial ANTES de cualquier require
 // ======================================================
