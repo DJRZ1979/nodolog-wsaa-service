@@ -27,7 +27,7 @@ try {
         'ok' => true,
         'ta' => base64_encode($ta->asXML()),
     ]);
-} catch (Exception $e) {
+} catch (Throwable $e) {
     $logger->log('wsaa.log', 'Error endpoint: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
