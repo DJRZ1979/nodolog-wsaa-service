@@ -18,7 +18,7 @@ if ($authHeader !== $config['auth_token']) {
 // Leer JSON
 $input   = json_decode(file_get_contents('php://input'), true) ?: [];
 $service = $input['service'] ?? null;
-
+$logger->log('wsaa.log', 'Punto A: antes del try');
 try {
     $wsaa = new AfipWSAA($config, $logger);
     $ta   = $wsaa->obtenerTA($service);
