@@ -65,14 +65,19 @@ class AfipWSAA
         // 4) Extraer PKCS7 puro desde S/MIME (Render produce multipart sí o sí)
         $cmsData = str_replace("\r\n", "\n", $cmsData);
 
-        // Si viene multipart/signed, quedarnos con la última parte base64
         if (strpos($cmsData, 'Content-Transfer-Encoding: base64') !== false) {
-            $parts = explode('Content-Transfer-Encoding: base64', $cmsData);
+            $parts   = explode('Content-Transfer-Encoding: base64', $cmsData);
             $cmsData = end($parts);
 
             // Saltar línea en blanco
             $cmsData = strstr($cmsData, "\n\n");
             $cmsData = substr($cmsData, 2);
+        }
+
+        // Cortar cualquier boundary que quede después del base64
+        $boundaryPos = strpos($cmsData, '------');
+        if ($boundaryPos !== false) {
+            $cmsData = substr($cmsData, 0, $boundaryPos);
         }
 
         // Eliminar delimitadores PKCS7 si los hubiera
@@ -81,7 +86,7 @@ class AfipWSAA
 
         $cmsData = trim($cmsData);
 
-        // ⭐ WSAA NO TOLERA SALTOS DE LÍNEA → base64 en UNA sola línea
+        // Base64 en una sola línea, sin espacios ni saltos
         $cmsData = preg_replace('/\s+/', '', $cmsData);
 
         if ($cmsData === '') {
