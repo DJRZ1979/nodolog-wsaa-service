@@ -44,13 +44,13 @@ class AfipWSAA
 
         // Firmar TRA → OpenSSL genera S/MIME
         $ok = openssl_pkcs7_sign(
-            $traFile,
-            $cmsFile,
-            'file://' . $this->conf['cert'],
-            ['file://' . $this->conf['key'], ''],
-            [],
-            PKCS7_BINARY | PKCS7_DETACHED
-        );
+    $traFile,
+    $cmsFile,
+    'file://' . $this->conf['cert'],
+    ['file://' . $this->conf['key'], ''],
+    [],
+    PKCS7_BINARY // sin PKCS7_DETACHED
+);
 
         if (!$ok) {
             $this->logger->log('wsaa.log', 'Error al firmar TRA');
