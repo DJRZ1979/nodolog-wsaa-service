@@ -51,7 +51,10 @@ class AfipWSAA
             'file://' . $this->conf['cert'],
             ['file://' . $this->conf['key'], ''],
             [],
-            PKCS7_BINARY
+            PKCS7_BINARY,
+    null,
+    OPENSSL_ALGO_SHA1
+
         );
 
         if (!$ok) {
