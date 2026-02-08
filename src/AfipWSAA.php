@@ -51,7 +51,7 @@ class AfipWSAA
             'file://' . $this->conf['cert'],
             ['file://' . $this->conf['key'], ''],
             [],
-            PKCS7_BINARY | PKCS7_DETACHED
+            PKCS7_BINARY
         );
 
         if (!$ok) {
