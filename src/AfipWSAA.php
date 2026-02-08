@@ -81,6 +81,9 @@ class AfipWSAA
 
         $cmsData = trim($cmsData);
 
+        // ⭐ WSAA NO TOLERA SALTOS DE LÍNEA → base64 en UNA sola línea
+        $cmsData = preg_replace('/\s+/', '', $cmsData);
+
         if ($cmsData === '') {
             $this->logger->log('wsaa.log', 'El CMS quedó vacío tras la extracción');
             throw new Exception('No se pudo extraer PKCS7 base64');
