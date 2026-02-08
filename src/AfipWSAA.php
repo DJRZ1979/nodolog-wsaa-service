@@ -15,7 +15,7 @@ class AfipWSAA
         if (file_exists($this->conf['ta_file'])) {
             $taXml = file_get_contents($this->conf['ta_file']);
             if ($taXml) {
-                $ta = new SimpleXMLElement($taXml);
+                $ta  = new SimpleXMLElement($taXml);
                 $exp = strtotime((string)$ta->header->expirationTime);
                 if ($exp - time() > $this->conf['ta_margin']) {
                     $this->logger->log('wsaa.log', 'TA cacheado válido');
@@ -27,9 +27,11 @@ class AfipWSAA
         $this->logger->log('wsaa.log', 'Generando nuevo TA');
 
         $env  = $this->conf['env'];
-        $wsdl = $env === 'prod' ? $this->conf['wsaa_wsdl_prod'] : $this->conf['wsaa_wsdl_homo'];
+        $wsdl = $env === 'prod'
+            ? $this->conf['wsaa_wsdl_prod']
+            : $this->conf['wsaa_wsdl_homo'];
 
-        // 2) Generar TRA
+        // 2) Generar TRA (loginTicketRequest)
         $tra = new SimpleXMLElement('<loginTicketRequest version="1.0"></loginTicketRequest>');
         $tra->addChild('header');
         $tra->header->addChild('uniqueId', time());
@@ -42,65 +44,52 @@ class AfipWSAA
 
         $cmsFile = tempnam(sys_get_temp_dir(), 'cms');
 
-        // 3) Firmar TRA con PKCS7 (Render-friendly)
-        $this->logger->log('wsaa.log', 'Firmando TRA con openssl_pkcs7_sign');
-
-        $ok = openssl_pkcs7_sign(
-            $traFile,
-            $cmsFile,
-            'file://' . $this->conf['cert'],
-            ['file://' . $this->conf['key'], ''],
-            [],
-            PKCS7_BINARY,
-    null,
-    OPENSSL_ALGO_SHA1
-
+        // 3) Firmar TRA usando openssl cms (SHA1, nodetach, PEM) – igual al manual
+        $cmd = sprintf(
+            'openssl cms -sign -in %s -out %s -signer %s -inkey %s -nodetach -outform PEM -md sha1 2>&1',
+            escapeshellarg($traFile),
+            escapeshellarg($cmsFile),
+            escapeshellarg($this->conf['cert']),
+            escapeshellarg($this->conf['key'])
         );
 
-        if (!$ok) {
-            $this->logger->log('wsaa.log', 'Error al firmar TRA');
-            throw new Exception('Error al firmar TRA');
+        $this->logger->log('wsaa.log', "Ejecutando: $cmd");
+
+        $output = [];
+        $ret    = 0;
+        exec($cmd, $output, $ret);
+
+        if ($ret !== 0) {
+            $this->logger->log('wsaa.log', "Error ejecutando openssl cms:\n" . implode("\n", $output));
+            throw new Exception('Error al firmar TRA con openssl cms');
         }
 
         $cmsData = file_get_contents($cmsFile);
         $this->logger->log('wsaa.log', "CMS bruto generado:\n" . $cmsData);
 
-        // 4) Extraer PKCS7 puro desde S/MIME (Render produce multipart sí o sí)
+        // 4) Extraer el bloque CMS base64 (entre BEGIN/END CMS) y normalizar
         $cmsData = str_replace("\r\n", "\n", $cmsData);
 
-        if (strpos($cmsData, 'Content-Transfer-Encoding: base64') !== false) {
-            $parts   = explode('Content-Transfer-Encoding: base64', $cmsData);
-            $cmsData = end($parts);
+        // Eliminar delimitadores BEGIN/END CMS
+        $cmsData = preg_replace('/-----BEGIN CMS-----/', '', $cmsData);
+        $cmsData = preg_replace('/-----END CMS-----/', '', $cmsData);
 
-            // Saltar línea en blanco
-            $cmsData = strstr($cmsData, "\n\n");
-            $cmsData = substr($cmsData, 2);
-        }
-
-        // Cortar cualquier boundary que quede después del base64
-        $boundaryPos = strpos($cmsData, '------');
-        if ($boundaryPos !== false) {
-            $cmsData = substr($cmsData, 0, $boundaryPos);
-        }
-
-        // Eliminar delimitadores PKCS7 si los hubiera
-        $cmsData = preg_replace('/-----BEGIN PKCS7-----/', '', $cmsData);
-        $cmsData = preg_replace('/-----END PKCS7-----/', '', $cmsData);
-
+        // Limpiar espacios y saltos
         $cmsData = trim($cmsData);
-
-        // Base64 en una sola línea, sin espacios ni saltos
         $cmsData = preg_replace('/\s+/', '', $cmsData);
 
         if ($cmsData === '') {
             $this->logger->log('wsaa.log', 'El CMS quedó vacío tras la extracción');
-            throw new Exception('No se pudo extraer PKCS7 base64');
+            throw new Exception('No se pudo extraer PKCS7/CMS base64');
         }
 
-        $this->logger->log('wsaa.log', "CMS extraído (PKCS7 base64 final):\n" . $cmsData);
+        $this->logger->log('wsaa.log', "CMS extraído (CMS base64 final):\n" . $cmsData);
 
-        // 5) Llamar a WSAA
-        $client = new SoapClient($wsdl, ['trace' => 1, 'exceptions' => true]);
+        // 5) Invocar loginCms en WSAA
+        $client = new SoapClient($wsdl, [
+            'trace'      => 1,
+            'exceptions' => true,
+        ]);
 
         $this->logger->log('wsaa.log', 'Invocando loginCms en WSAA');
         $resp = $client->loginCms(['in0' => $cmsData]);
